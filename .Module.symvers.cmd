@@ -1,0 +1,1 @@
+cmd_/home/kdz7/w/projet/compteur/Module.symvers :=  sed 's/ko$$/o/'  /home/kdz7/w/projet/compteur/modules.order | scripts/mod/modpost -m      -o /home/kdz7/w/projet/compteur/Module.symvers -e -i Module.symvers -T - 
