@@ -10,7 +10,7 @@
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("MKGL: Marwa-Kim-Gaby-Lou");
 MODULE_DESCRIPTION("Variable period counter module");
-MODULE_VERSION("1.0");
+MODULE_VERSION("0.0.0");
 
 // Paramètres globaux
 static int num_devices = 3;         // Nombre de périphériques
@@ -21,7 +21,7 @@ static counter_t *pcounter;         // Tableau des compteurs
 
 module_param(num_devices, int, S_IRUGO);
 MODULE_PARM_DESC(num_devices, "Number of counter devices (default=3)");
-module_param(delay, int, S_IRUGO);
+module_param(delay, int, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(delay, "Delay (ms) between counter increments (default=100)");
 
 /* Initialisation d'un périphérique compteur */
@@ -47,8 +47,7 @@ static ssize_t counter_read(struct file *file, char __user *buf, size_t count, l
     if (copy_to_user(buf, kbuf, len))
         return -EFAULT;
 
-    *ppos = 0; // Réinitialiser pour permettre une lecture continue
-
+    *ppos = 0;
     msleep(delay); // Introduire un délai pour simuler une lecture fluide
     return len;
 }
@@ -67,15 +66,16 @@ static ssize_t counter_write(struct file *file, const char __user *buf, size_t c
         return -EFAULT;
 
     kbuf[count] = '\0';
+    // La période doit être strictement positive
     if (kstrtouint(kbuf, 10, &new_period) || new_period == 0)
-        return -EINVAL; // La période doit être strictement positive
+        return -EINVAL;
 
     mutex_lock(&cnt->lock);
     cnt->period = new_period; // Changer la période
     mutex_unlock(&cnt->lock);
 
     pr_info("Counter%d: Period updated to %u\n", (int)(cnt - pcounter), new_period);
-    return count; // Retourne le nombre de bytes écrits
+    return count;
 }
 
 /* Ouverture du périphérique */
@@ -107,6 +107,9 @@ static int __init counter_module_init(void)
 {
     int ret, i;
     dev_t dev;
+
+    if (num_devices <= 0)
+        return -EINVAL;
 
     // Allocation dynamique d'un numéro majeur
     ret = alloc_chrdev_region(&dev, 0, num_devices, DEVICE_NAME);

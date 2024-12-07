@@ -3,8 +3,8 @@
 # Nom de base des périphériques (par défaut : counter)
 DEVICE_NAME=${1:-counter}
 
-# Permissions à appliquer
-PERMISSIONS="666"
+# Permissions à appliquer (par défaut : 666)
+PERMISSIONS=${2:-666}
 
 # Chercher les périphériques correspondant au nom
 DEVICES=$(ls /dev/${DEVICE_NAME}* 2>/dev/null)
